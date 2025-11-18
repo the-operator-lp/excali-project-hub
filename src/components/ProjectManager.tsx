@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, FolderPlus, Upload, Plus, Edit2, Trash2, FileText } from "lucide-react";
+import { ChevronDown, ChevronRight, FolderPlus, Upload, Plus, Edit2, Trash2, FileText, ChevronLeft, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -24,6 +24,8 @@ interface ProjectManagerProps {
   onProjectsChange: (projects: Project[]) => void;
   onFileSelect: (projectId: string, fileId: string) => void;
   onCreateFile: (projectId: string) => void;
+  isCollapsed: boolean;
+  onToggleCollapse: () => void;
 }
 
 export const ProjectManager = ({
@@ -33,6 +35,8 @@ export const ProjectManager = ({
   onProjectsChange,
   onFileSelect,
   onCreateFile,
+  isCollapsed,
+  onToggleCollapse,
 }: ProjectManagerProps) => {
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingProjectName, setEditingProjectName] = useState("");
@@ -106,10 +110,39 @@ export const ProjectManager = ({
     input.click();
   };
 
+  // Collapsed state - minimal view
+  if (isCollapsed) {
+    return (
+      <div className="w-14 border-r border-border bg-card flex flex-col h-screen items-center py-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleCollapse}
+          className="mb-4"
+          title="Expand Project Manager"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+        <div className="flex-1" />
+      </div>
+    );
+  }
+
   return (
     <div className="w-80 border-r border-border bg-card flex flex-col h-screen">
       <div className="p-4 border-b border-border">
-        <h2 className="text-lg font-semibold text-foreground mb-3">Project Manager</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-semibold text-foreground">Project Manager</h2>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleCollapse}
+            className="h-8 w-8"
+            title="Collapse Project Manager"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+        </div>
         <Button
           onClick={handleCreateProject}
           className="w-full"

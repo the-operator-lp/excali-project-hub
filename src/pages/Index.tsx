@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 const Index = () => {
   const [appState, setAppState] = useState<AppState>(() => loadState());
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     saveState(appState);
@@ -84,6 +85,8 @@ const Index = () => {
         onProjectsChange={handleProjectsChange}
         onFileSelect={handleFileSelect}
         onCreateFile={handleCreateFile}
+        isCollapsed={isCollapsed}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
       />
       <ExcalidrawCanvas currentFile={currentFile} onContentChange={handleContentChange} />
     </div>
