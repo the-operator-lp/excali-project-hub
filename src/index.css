@@ -115,3 +115,7 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+.dropdown-menu-button {
+  display: none !important ;
+}

@@ -156,7 +156,7 @@ export const ProjectManager = ({
       <ScrollArea className="flex-1">
         <div className="p-2">
           {projects.map((project) => (
-            <div key={project.id} className="mb-2">
+            <div key={project.id} className="mb-2 p-2">
               <div className="flex items-center gap-1 p-2 rounded hover:bg-accent/50 group">
                 <Button
                   variant="ghost"

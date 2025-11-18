@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Excalidraw } from "@excalidraw/excalidraw";
 import { ExcalidrawFile } from "@/types/project";
+import '@excalidraw/excalidraw/index.css';
 
 interface ExcalidrawCanvasProps {
   currentFile: ExcalidrawFile | null;
