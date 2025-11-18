@@ -15,6 +15,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { toast } from "sonner";
 
 interface ProjectManagerProps {
@@ -213,142 +219,132 @@ export const ProjectManager = ({
     
     return (
       <div key={project.id} className="mb-2" style={{ marginLeft: `${depth * 16}px` }}>
-        <div 
-          className="flex items-center gap-1 p-2 rounded hover:bg-accent/50 group"
-          onDragOver={handleDragOver}
-          onDrop={() => handleDrop(project.id)}
-        >
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={() => handleToggleProject(project.id)}
-          >
-            {project.isExpanded ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-          </Button>
-
-          {editingProjectId === project.id ? (
-            <Input
-              value={editingProjectName}
-              onChange={(e) => setEditingProjectName(e.target.value)}
-              onBlur={() => handleRenameProject(project.id, editingProjectName)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleRenameProject(project.id, editingProjectName);
-                } else if (e.key === "Escape") {
-                  setEditingProjectId(null);
-                }
-              }}
-              autoFocus
-              className="h-7 flex-1"
-            />
-          ) : (
-            <span className="flex-1 text-sm font-medium truncate">
-              {project.name}
-            </span>
-          )}
-
-          <div className="opacity-0 group-hover:opacity-100 flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => handleCreateProject(project.id)}
-              title="Add sub-project"
+        <ContextMenu>
+          <ContextMenuTrigger>
+            <div 
+              className="flex items-center gap-1 p-2 rounded hover:bg-accent/50"
+              onDragOver={handleDragOver}
+              onDrop={() => handleDrop(project.id)}
             >
-              <FolderPlus className="h-3 w-3" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6"
-              onClick={() => {
-                setEditingProjectId(project.id);
-                setEditingProjectName(project.name);
-              }}
-            >
-              <Edit2 className="h-3 w-3" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 text-destructive hover:text-destructive"
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-6 w-6"
+                onClick={() => handleToggleProject(project.id)}
+              >
+                {project.isExpanded ? (
+                  <ChevronDown className="h-4 w-4" />
+                ) : (
+                  <ChevronRight className="h-4 w-4" />
+                )}
+              </Button>
+
+              {editingProjectId === project.id ? (
+                <Input
+                  value={editingProjectName}
+                  onChange={(e) => setEditingProjectName(e.target.value)}
+                  onBlur={() => handleRenameProject(project.id, editingProjectName)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleRenameProject(project.id, editingProjectName);
+                    } else if (e.key === "Escape") {
+                      setEditingProjectId(null);
+                    }
+                  }}
+                  autoFocus
+                  className="h-7 flex-1"
+                />
+              ) : (
+                <span className="flex-1 text-sm font-medium truncate">
+                  {project.name}
+                </span>
+              )}
+            </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent>
+            <ContextMenuItem onClick={() => handleCreateProject(project.id)}>
+              <FolderPlus className="h-4 w-4 mr-2" />
+              Add Sub-Project
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => {
+              setEditingProjectId(project.id);
+              setEditingProjectName(project.name);
+            }}>
+              <Edit2 className="h-4 w-4 mr-2" />
+              Rename
+            </ContextMenuItem>
+            <ContextMenuItem 
               onClick={() => setDeleteProjectId(project.id)}
+              className="text-destructive focus:text-destructive"
             >
-              <Trash2 className="h-3 w-3" />
-            </Button>
-          </div>
-        </div>
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
 
         {project.isExpanded && (
           <div className="ml-4 mt-1 space-y-1">
             {project.files.map((file) => (
-              <div
-                key={file.id}
-                draggable
-                onDragStart={() => handleDragStart(project.id, file.id)}
-                className="flex items-center gap-1 group"
-              >
-                <GripVertical className="h-3 w-3 text-muted-foreground cursor-move" />
-                {editingFileId === file.id ? (
-                  <Input
-                    value={editingFileName}
-                    onChange={(e) => setEditingFileName(e.target.value)}
-                    onBlur={() => handleRenameFile(project.id, file.id, editingFileName)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleRenameFile(project.id, file.id, editingFileName);
-                      } else if (e.key === "Escape") {
-                        setEditingFileId(null);
-                      }
-                    }}
-                    autoFocus
-                    className="h-7 flex-1"
-                  />
-                ) : (
-                  <Button
-                    variant="ghost"
-                    className={`flex-1 justify-start h-8 text-sm ${
-                      currentFileId === file.id
-                        ? "bg-primary/10 text-primary font-medium"
-                        : ""
-                    }`}
-                    onClick={() => onFileSelect(project.id, file.id)}
+              <ContextMenu key={file.id}>
+                <ContextMenuTrigger>
+                  <div
+                    draggable
+                    onDragStart={() => handleDragStart(project.id, file.id)}
+                    className="flex items-center gap-1"
                   >
-                    <FileText className="h-3 w-3 mr-2" />
-                    <span className="truncate">{file.name}</span>
-                    {currentFileId === file.id && (
-                      <span className="ml-auto text-xs">(Open)</span>
+                    <GripVertical className="h-3 w-3 text-muted-foreground cursor-move" />
+                    {editingFileId === file.id ? (
+                      <Input
+                        value={editingFileName}
+                        onChange={(e) => setEditingFileName(e.target.value)}
+                        onBlur={() => handleRenameFile(project.id, file.id, editingFileName)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleRenameFile(project.id, file.id, editingFileName);
+                          } else if (e.key === "Escape") {
+                            setEditingFileId(null);
+                          }
+                        }}
+                        autoFocus
+                        className="h-7 flex-1"
+                      />
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        className={`flex-1 justify-start h-8 text-sm ${
+                          currentFileId === file.id
+                            ? "bg-primary/10 text-primary font-medium"
+                            : ""
+                        }`}
+                        onClick={() => onFileSelect(project.id, file.id)}
+                      >
+                        <FileText className="h-3 w-3 mr-2 flex-shrink-0" />
+                        <span className="truncate">{file.name}</span>
+                        {currentFileId === file.id && (
+                          <span className="ml-auto text-xs flex-shrink-0">(Open)</span>
+                        )}
+                      </Button>
                     )}
-                  </Button>
-                )}
-                
-                <div className="opacity-0 group-hover:opacity-100 flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => {
-                      setEditingFileId(file.id);
-                      setEditingFileName(file.name);
-                    }}
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-destructive hover:text-destructive"
+                  </div>
+                </ContextMenuTrigger>
+                <ContextMenuContent>
+                  <ContextMenuItem onClick={() => {
+                    setEditingFileId(file.id);
+                    setEditingFileName(file.name);
+                  }}>
+                    <Edit2 className="h-4 w-4 mr-2" />
+                    Rename
+                  </ContextMenuItem>
+                  <ContextMenuItem 
                     onClick={() => setDeleteFileInfo({ projectId: project.id, fileId: file.id })}
+                    className="text-destructive focus:text-destructive"
                   >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Delete
+                  </ContextMenuItem>
+                </ContextMenuContent>
+              </ContextMenu>
             ))}
 
             <div className="flex gap-1 mt-2">
