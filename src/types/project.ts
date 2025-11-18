@@ -12,6 +12,8 @@ export interface Project {
   files: ExcalidrawFile[];
   createdAt: number;
   isExpanded?: boolean;
+  parentId?: string | null;
+  children?: Project[];
 }
 
 export interface AppState {

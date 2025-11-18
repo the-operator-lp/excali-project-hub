@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, FolderPlus, Upload, Plus, Edit2, Trash2, FileText, ChevronLeft, Menu } from "lucide-react";
+import { ChevronDown, ChevronRight, FolderPlus, Upload, Plus, Edit2, Trash2, FileText, ChevronLeft, Menu, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -41,14 +41,29 @@ export const ProjectManager = ({
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [editingProjectName, setEditingProjectName] = useState("");
   const [deleteProjectId, setDeleteProjectId] = useState<string | null>(null);
+  const [editingFileId, setEditingFileId] = useState<string | null>(null);
+  const [editingFileName, setEditingFileName] = useState("");
+  const [deleteFileInfo, setDeleteFileInfo] = useState<{ projectId: string; fileId: string } | null>(null);
+  const [draggedFile, setDraggedFile] = useState<{ projectId: string; fileId: string } | null>(null);
 
-  const handleCreateProject = () => {
+  const handleCreateProject = (parentId?: string) => {
+    const baseName = "New Project";
+    let newName = baseName;
+    let counter = 1;
+    
+    // Check for duplicate names
+    while (projects.some(p => p.name.toLowerCase() === newName.toLowerCase())) {
+      newName = `${baseName} ${counter}`;
+      counter++;
+    }
+    
     const newProject: Project = {
       id: generateId(),
-      name: "New Project",
+      name: newName,
       files: [],
       createdAt: Date.now(),
       isExpanded: true,
+      parentId: parentId || null,
     };
     onProjectsChange([...projects, newProject]);
     toast.success("Project created");
@@ -63,6 +78,17 @@ export const ProjectManager = ({
 
   const handleRenameProject = (projectId: string, newName: string) => {
     if (!newName.trim()) return;
+    
+    // Check for duplicate names (excluding current project)
+    const isDuplicate = projects.some(
+      p => p.id !== projectId && p.name.toLowerCase() === newName.trim().toLowerCase()
+    );
+    
+    if (isDuplicate) {
+      toast.error("A project with this name already exists");
+      return;
+    }
+    
     const updatedProjects = projects.map((p) =>
       p.id === projectId ? { ...p, name: newName.trim() } : p
     );
@@ -76,6 +102,39 @@ export const ProjectManager = ({
     onProjectsChange(updatedProjects);
     setDeleteProjectId(null);
     toast.success("Project deleted");
+  };
+
+  const handleRenameFile = (projectId: string, fileId: string, newName: string) => {
+    if (!newName.trim()) return;
+    const updatedProjects = projects.map((p) => {
+      if (p.id === projectId) {
+        return {
+          ...p,
+          files: p.files.map((f) =>
+            f.id === fileId ? { ...f, name: newName.trim() } : f
+          ),
+        };
+      }
+      return p;
+    });
+    onProjectsChange(updatedProjects);
+    setEditingFileId(null);
+    toast.success("File renamed");
+  };
+
+  const handleDeleteFile = (projectId: string, fileId: string) => {
+    const updatedProjects = projects.map((p) => {
+      if (p.id === projectId) {
+        return {
+          ...p,
+          files: p.files.filter((f) => f.id !== fileId),
+        };
+      }
+      return p;
+    });
+    onProjectsChange(updatedProjects);
+    setDeleteFileInfo(null);
+    toast.success("File deleted");
   };
 
   const handleUploadFile = async (projectId: string) => {
@@ -108,6 +167,216 @@ export const ProjectManager = ({
       }
     };
     input.click();
+  };
+
+  const handleDragStart = (projectId: string, fileId: string) => {
+    setDraggedFile({ projectId, fileId });
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (targetProjectId: string) => {
+    if (!draggedFile) return;
+    
+    if (draggedFile.projectId === targetProjectId) {
+      setDraggedFile(null);
+      return;
+    }
+
+    const sourceProject = projects.find(p => p.id === draggedFile.projectId);
+    const file = sourceProject?.files.find(f => f.id === draggedFile.fileId);
+    
+    if (!file) {
+      setDraggedFile(null);
+      return;
+    }
+
+    const updatedProjects = projects.map((p) => {
+      if (p.id === draggedFile.projectId) {
+        return { ...p, files: p.files.filter(f => f.id !== draggedFile.fileId) };
+      }
+      if (p.id === targetProjectId) {
+        return { ...p, files: [...p.files, file] };
+      }
+      return p;
+    });
+
+    onProjectsChange(updatedProjects);
+    setDraggedFile(null);
+    toast.success("File moved to project");
+  };
+
+  const renderProject = (project: Project, depth: number = 0) => {
+    const childProjects = projects.filter(p => p.parentId === project.id);
+    
+    return (
+      <div key={project.id} className="mb-2" style={{ marginLeft: `${depth * 16}px` }}>
+        <div 
+          className="flex items-center gap-1 p-2 rounded hover:bg-accent/50 group"
+          onDragOver={handleDragOver}
+          onDrop={() => handleDrop(project.id)}
+        >
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={() => handleToggleProject(project.id)}
+          >
+            {project.isExpanded ? (
+              <ChevronDown className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
+
+          {editingProjectId === project.id ? (
+            <Input
+              value={editingProjectName}
+              onChange={(e) => setEditingProjectName(e.target.value)}
+              onBlur={() => handleRenameProject(project.id, editingProjectName)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleRenameProject(project.id, editingProjectName);
+                } else if (e.key === "Escape") {
+                  setEditingProjectId(null);
+                }
+              }}
+              autoFocus
+              className="h-7 flex-1"
+            />
+          ) : (
+            <span className="flex-1 text-sm font-medium truncate">
+              {project.name}
+            </span>
+          )}
+
+          <div className="opacity-0 group-hover:opacity-100 flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => handleCreateProject(project.id)}
+              title="Add sub-project"
+            >
+              <FolderPlus className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6"
+              onClick={() => {
+                setEditingProjectId(project.id);
+                setEditingProjectName(project.name);
+              }}
+            >
+              <Edit2 className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 text-destructive hover:text-destructive"
+              onClick={() => setDeleteProjectId(project.id)}
+            >
+              <Trash2 className="h-3 w-3" />
+            </Button>
+          </div>
+        </div>
+
+        {project.isExpanded && (
+          <div className="ml-4 mt-1 space-y-1">
+            {project.files.map((file) => (
+              <div
+                key={file.id}
+                draggable
+                onDragStart={() => handleDragStart(project.id, file.id)}
+                className="flex items-center gap-1 group"
+              >
+                <GripVertical className="h-3 w-3 text-muted-foreground cursor-move" />
+                {editingFileId === file.id ? (
+                  <Input
+                    value={editingFileName}
+                    onChange={(e) => setEditingFileName(e.target.value)}
+                    onBlur={() => handleRenameFile(project.id, file.id, editingFileName)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        handleRenameFile(project.id, file.id, editingFileName);
+                      } else if (e.key === "Escape") {
+                        setEditingFileId(null);
+                      }
+                    }}
+                    autoFocus
+                    className="h-7 flex-1"
+                  />
+                ) : (
+                  <Button
+                    variant="ghost"
+                    className={`flex-1 justify-start h-8 text-sm ${
+                      currentFileId === file.id
+                        ? "bg-primary/10 text-primary font-medium"
+                        : ""
+                    }`}
+                    onClick={() => onFileSelect(project.id, file.id)}
+                  >
+                    <FileText className="h-3 w-3 mr-2" />
+                    <span className="truncate">{file.name}</span>
+                    {currentFileId === file.id && (
+                      <span className="ml-auto text-xs">(Open)</span>
+                    )}
+                  </Button>
+                )}
+                
+                <div className="opacity-0 group-hover:opacity-100 flex gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6"
+                    onClick={() => {
+                      setEditingFileId(file.id);
+                      setEditingFileName(file.name);
+                    }}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-destructive hover:text-destructive"
+                    onClick={() => setDeleteFileInfo({ projectId: project.id, fileId: file.id })}
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+
+            <div className="flex gap-1 mt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-8 text-xs"
+                onClick={() => onCreateFile(project.id)}
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                New File
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1 h-8 text-xs"
+                onClick={() => handleUploadFile(project.id)}
+              >
+                <Upload className="h-3 w-3 mr-1" />
+                Upload
+              </Button>
+            </div>
+            
+            {childProjects.map(childProject => renderProject(childProject, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   // Collapsed state - minimal view
@@ -144,7 +413,7 @@ export const ProjectManager = ({
           </Button>
         </div>
         <Button
-          onClick={handleCreateProject}
+          onClick={() => handleCreateProject()}
           className="w-full"
           variant="default"
         >
@@ -154,112 +423,8 @@ export const ProjectManager = ({
       </div>
 
       <ScrollArea className="flex-1">
-        <div className="p-2">
-          {projects.map((project) => (
-            <div key={project.id} className="mb-2 p-2">
-              <div className="flex items-center gap-1 p-2 rounded hover:bg-accent/50 group">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6"
-                  onClick={() => handleToggleProject(project.id)}
-                >
-                  {project.isExpanded ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </Button>
-
-                {editingProjectId === project.id ? (
-                  <Input
-                    value={editingProjectName}
-                    onChange={(e) => setEditingProjectName(e.target.value)}
-                    onBlur={() => handleRenameProject(project.id, editingProjectName)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        handleRenameProject(project.id, editingProjectName);
-                      } else if (e.key === "Escape") {
-                        setEditingProjectId(null);
-                      }
-                    }}
-                    autoFocus
-                    className="h-7 flex-1"
-                  />
-                ) : (
-                  <span className="flex-1 text-sm font-medium truncate">
-                    {project.name}
-                  </span>
-                )}
-
-                <div className="opacity-0 group-hover:opacity-100 flex gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6"
-                    onClick={() => {
-                      setEditingProjectId(project.id);
-                      setEditingProjectName(project.name);
-                    }}
-                  >
-                    <Edit2 className="h-3 w-3" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 text-destructive hover:text-destructive"
-                    onClick={() => setDeleteProjectId(project.id)}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-
-              {project.isExpanded && (
-                <div className="ml-4 mt-1 space-y-1">
-                  {project.files.map((file) => (
-                    <Button
-                      key={file.id}
-                      variant="ghost"
-                      className={`w-full justify-start h-8 text-sm ${
-                        currentFileId === file.id
-                          ? "bg-primary/10 text-primary font-medium"
-                          : ""
-                      }`}
-                      onClick={() => onFileSelect(project.id, file.id)}
-                    >
-                      <FileText className="h-3 w-3 mr-2" />
-                      <span className="truncate">{file.name}</span>
-                      {currentFileId === file.id && (
-                        <span className="ml-auto text-xs">(Open)</span>
-                      )}
-                    </Button>
-                  ))}
-
-                  <div className="flex gap-1 mt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 h-8 text-xs"
-                      onClick={() => onCreateFile(project.id)}
-                    >
-                      <Plus className="h-3 w-3 mr-1" />
-                      New File
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="flex-1 h-8 text-xs"
-                      onClick={() => handleUploadFile(project.id)}
-                    >
-                      <Upload className="h-3 w-3 mr-1" />
-                      Upload
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+        <div className="p-4">
+          {projects.filter(p => !p.parentId).map((project) => renderProject(project))}
         </div>
       </ScrollArea>
 
@@ -275,6 +440,26 @@ export const ProjectManager = ({
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteProjectId && handleDeleteProject(deleteProjectId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteFileInfo !== null} onOpenChange={() => setDeleteFileInfo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete File</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this file? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteFileInfo && handleDeleteFile(deleteFileInfo.projectId, deleteFileInfo.fileId)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Delete
