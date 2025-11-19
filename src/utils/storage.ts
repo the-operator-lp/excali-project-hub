@@ -6,7 +6,13 @@ export const loadState = (): AppState => {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      // Convert dirtyFiles array back to Set
+      return {
+        ...parsed,
+        openFiles: parsed.openFiles || [],
+        dirtyFiles: new Set(parsed.dirtyFiles || []),
+      };
     }
   } catch (error) {
     console.error("Error loading state:", error);
@@ -25,12 +31,19 @@ export const loadState = (): AppState => {
     ],
     currentProjectId: "default-project",
     currentFileId: null,
+    openFiles: [],
+    dirtyFiles: new Set(),
   };
 };
 
 export const saveState = (state: AppState): void => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    // Convert Set to Array for JSON serialization
+    const serializableState = {
+      ...state,
+      dirtyFiles: Array.from(state.dirtyFiles),
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(serializableState));
   } catch (error) {
     console.error("Error saving state:", error);
   }

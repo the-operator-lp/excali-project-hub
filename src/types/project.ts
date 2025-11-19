@@ -20,4 +20,6 @@ export interface AppState {
   projects: Project[];
   currentProjectId: string | null;
   currentFileId: string | null;
+  openFiles: Array<{ fileId: string; projectId: string }>; // Track open files for tabs
+  dirtyFiles: Set<string>; // Track files with unsaved changes
 }

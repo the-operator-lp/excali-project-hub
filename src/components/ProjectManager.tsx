@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown, ChevronRight, FolderPlus, Upload, Plus, Edit2, Trash2, FileText, ChevronLeft, Menu, GripVertical } from "lucide-react";
+import { ChevronDown, ChevronRight, FolderPlus, Upload, Plus, Edit2, Trash2, FileText, ChevronLeft, Menu, GripVertical, Folder } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -262,9 +262,17 @@ export const ProjectManager = ({
             </div>
           </ContextMenuTrigger>
           <ContextMenuContent>
+            <ContextMenuItem onClick={() => onCreateFile(project.id)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New File
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => handleUploadFile(project.id)}>
+              <Upload className="h-4 w-4 mr-2" />
+              Upload File
+            </ContextMenuItem>
             <ContextMenuItem onClick={() => handleCreateProject(project.id)}>
-              <FolderPlus className="h-4 w-4 mr-2" />
-              Add Sub-Project
+              <Folder className="h-4 w-4 mr-2" />
+              New Folder
             </ContextMenuItem>
             <ContextMenuItem onClick={() => {
               setEditingProjectId(project.id);
@@ -346,27 +354,6 @@ export const ProjectManager = ({
                 </ContextMenuContent>
               </ContextMenu>
             ))}
-
-            <div className="flex gap-1 mt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 h-8 text-xs"
-                onClick={() => onCreateFile(project.id)}
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                New File
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1 h-8 text-xs"
-                onClick={() => handleUploadFile(project.id)}
-              >
-                <Upload className="h-3 w-3 mr-1" />
-                Upload
-              </Button>
-            </div>
             
             {childProjects.map(childProject => renderProject(childProject, depth + 1))}
           </div>
