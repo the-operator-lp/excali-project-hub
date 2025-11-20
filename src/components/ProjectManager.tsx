@@ -9,6 +9,7 @@ import { truncate } from "@/lib/utils";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuTrigger } from "@/components/ui/context-menu";
 import { toast } from "sonner";
+import { saveExcalidrawFileToDirectory, exportProjectToDirectory } from "@/utils/filesystem";
 
 interface ProjectManagerProps {
     projects: Project[];
@@ -223,6 +224,20 @@ export const ProjectManager = ({ projects, currentProjectId, currentFileId, onPr
                             <Upload className="h-4 w-4 mr-2" />
                             Upload File
                         </ContextMenuItem>
+                        <ContextMenuItem
+                            onClick={async () => {
+                                try {
+                                    await exportProjectToDirectory(project);
+                                    toast.success("Project exported to selected directory");
+                                } catch (err) {
+                                    console.error("Failed to export project:", err);
+                                    toast.error("Failed to export project");
+                                }
+                            }}
+                        >
+                            <Folder className="h-4 w-4 mr-2" />
+                            Export Project
+                        </ContextMenuItem>
                         <ContextMenuItem onClick={() => handleCreateProject(project.id)}>
                             <Folder className="h-4 w-4 mr-2" />
                             New Folder
@@ -288,6 +303,21 @@ export const ProjectManager = ({ projects, currentProjectId, currentFileId, onPr
                                     >
                                         <Edit2 className="h-4 w-4 mr-2" />
                                         Rename
+                                    </ContextMenuItem>
+
+                                    <ContextMenuItem
+                                        onClick={async () => {
+                                            try {
+                                                await saveExcalidrawFileToDirectory(file, project.name);
+                                                toast.success("File saved to selected directory");
+                                            } catch (err) {
+                                                console.error("Failed to save file to directory:", err);
+                                                toast.error("Failed to save file to directory");
+                                            }
+                                        }}
+                                    >
+                                        <Upload className="h-4 w-4 mr-2" />
+                                        Save to Directory
                                     </ContextMenuItem>
                                     <ContextMenuItem onClick={() => setDeleteFileInfo({ projectId: project.id, fileId: file.id })} className="text-destructive focus:text-destructive">
                                         <Trash2 className="h-4 w-4 mr-2" />
