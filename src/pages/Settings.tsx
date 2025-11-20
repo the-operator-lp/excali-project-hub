@@ -92,18 +92,18 @@ export const Settings = () => {
                             </div>
 
                             <div className="flex items-center space-x-3 rounded-lg border border-border p-4 hover:bg-accent/50">
-                                <RadioGroupItem value="indexedDB" id="indexedDB" />
-                                <Label htmlFor="indexedDB" className="flex-1 cursor-pointer">
-                                    <div className="font-medium">Browser IndexedDB</div>
-                                    <div className="text-sm text-muted-foreground">Advanced browser storage with larger capacity (limit: ~50MB+)</div>
-                                </Label>
-                            </div>
-
-                            <div className="flex items-center space-x-3 rounded-lg border border-border p-4 hover:bg-accent/50">
                                 <RadioGroupItem value="localDirectory" id="localDirectory" />
                                 <Label htmlFor="localDirectory" className="flex-1 cursor-pointer">
                                     <div className="font-medium">Local Directory</div>
                                     <div className="text-sm text-muted-foreground">Save files directly to a folder on your machine (requires browser support)</div>
+                                </Label>
+                            </div>
+
+                            <div className="flex items-center space-x-3 rounded-lg border border-border p-4 hover:bg-accent/50">
+                                <RadioGroupItem value="indexedDB" id="indexedDB" />
+                                <Label htmlFor="indexedDB" className="flex-1 cursor-pointer">
+                                    <div className="font-medium">Browser IndexedDB</div>
+                                    <div className="text-sm text-muted-foreground">Advanced browser storage with larger capacity (limit: ~50MB+)</div>
                                 </Label>
                             </div>
 
@@ -188,46 +188,6 @@ export const Settings = () => {
                                             }}
                                         >
                                             Clear
-                                        </Button>
-                                    </div>
-                                </div>
-                                <div className="mt-4">
-                                    <Label className="text-sm">Absolute path (optional)</Label>
-                                    <div className="flex items-center gap-2 mt-2">
-                                        <input
-                                            type="text"
-                                            className="flex-1 rounded-md border border-border px-3 py-2 bg-background text-foreground"
-                                            placeholder="/Users/you/Documents/MyProjects/..."
-                                            value={defaultDirPath || ""}
-                                            onChange={(e) => setDefaultDirPathState(e.target.value)}
-                                        />
-                                        <Button
-                                            onClick={async () => {
-                                                try {
-                                                    await setDefaultDirectoryPath(defaultDirPath || null);
-                                                    toast.success("Path saved");
-                                                } catch (err) {
-                                                    console.error(err);
-                                                    toast.error("Failed to save path");
-                                                }
-                                            }}
-                                        >
-                                            Save Path
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            onClick={async () => {
-                                                try {
-                                                    await setDefaultDirectoryPath(null);
-                                                    setDefaultDirPathState(null);
-                                                    toast.success("Path cleared");
-                                                } catch (err) {
-                                                    console.error(err);
-                                                    toast.error("Failed to clear path");
-                                                }
-                                            }}
-                                        >
-                                            Clear Path
                                         </Button>
                                     </div>
                                 </div>
